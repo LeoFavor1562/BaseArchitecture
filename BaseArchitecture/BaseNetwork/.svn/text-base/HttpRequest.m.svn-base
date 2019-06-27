@@ -1,0 +1,362 @@
+//
+//  HttpRequest.m
+//  KSD
+//
+//  Created by unispeed on 2018/3/26.
+//  Copyright © 2018年 Ding. All rights reserved.
+//
+
+#import "HttpRequest.h"
+#import "NoExistVC.h"
+#import "NoDataVC.h"
+#import "BaseVC.h"
+
+@implementation HttpRequest
+
+//+(void)requestPost:(NSString *)urlPath withParameters:(NSDictionary *)parameters withProtocol:(id<HttpProtocol>)delegate withTag:(NSString*)tag{
+//
+//    BasePresenter * base = (BasePresenter*)delegate;
+//    BaseVC * vc = (BaseVC*)base.currentVC;
+//    HttpU * http = [[HttpU alloc] init];
+//    [http requestPost:urlPath withParameters:parameters completedBlock:^(id responseObject) {
+////        vc.wifiView.hidden = YES;
+////        vc.servErrorView.hidden = YES;
+//
+//        NSString * message=[ObjectHasUtil parseMsg:responseObject];
+//        if ([ObjectHasUtil parseSuccess:responseObject]) {
+//            NSDictionary *dic=[ObjectHasUtil parseResponse:responseObject];
+//            if (dic!=nil&&([dic isKindOfClass:[NSDictionary class]]||[dic isKindOfClass:[NSArray class]])) {
+//                if(delegate!=nil&&[delegate respondsToSelector:@selector(success:tag:withFlag:)]){
+//                    [delegate success:dic tag:tag withFlag:nil];
+//                }
+//            }else{
+//                if(delegate!=nil&&[delegate respondsToSelector:@selector(empty:)]){
+//                    [delegate empty:tag];
+//                }
+//            }
+//
+//            if (!IsStrEmpty(message)) {
+//                [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@",message]];
+//            }
+//        } else {
+//            if(delegate!=nil&&[delegate respondsToSelector:@selector(fail:tag:)]){
+//                [delegate fail:message tag:tag];
+//
+//                NSString * code = [ObjectHasUtil parseCode:responseObject];
+//                if (code.intValue == 401)
+//                {
+//                    NSUserDefaults * saveDef = [NSUserDefaults standardUserDefaults];
+//                    [saveDef setBool:NO forKey:TAG_ISUSERLOGINED];
+//                    [saveDef setValue:@"" forKey:@"userCookie"];//清除
+//                    [saveDef synchronize];
+//                    //清除所有缓存
+//                    [[NSURLCache sharedURLCache] removeAllCachedResponses];
+//                    APPDELEGATE.mainTabVC.redCount.hidden = YES;
+//
+//                    [LoginManager ensureLoginFromVC:vc withIndex:1 successBlock:^{
+//
+//                    } failBlock:^{
+//
+//                    } cancelBlock:^{
+//
+//                    }];
+//                } else if (code.intValue == 20001) {
+//                    NoExistVC * existVC = [[NoExistVC alloc] init];
+//                    [vc.navigationController pushViewController:existVC animated:YES];
+//                } else if (code.intValue == 200002) {
+//                    NoDataVC * dataVC = [[NoDataVC alloc] init];
+//                    [vc.navigationController pushViewController:dataVC animated:YES];
+//                } else {
+//                    if (!IsStrEmpty(message)) {
+//                        [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@",message]];
+//                    } else {
+//                        if(delegate!=nil&&[delegate respondsToSelector:@selector(empty:)]){
+//                            [delegate empty:tag];
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//    } failureBlock:^(NSError *error) {
+//        if(delegate!=nil&&[delegate respondsToSelector:@selector(error:)]){
+//            [delegate error:tag];
+//        }
+//    }];
+//
+//}
+
+
+//+(void)requestPost:(NSString *)urlPath withImage:(UIImage*)image withParameters:(NSDictionary *)parameters withProtocol:(id<HttpProtocol>)delegate withTag:(NSString*)tag withFlag:(NSString*)flag{
+//    
+//    BasePresenter * base = (BasePresenter*)delegate;
+//    BaseVC * vc = (BaseVC*)base.currentVC;
+//    HttpU * http = [[HttpU alloc] init];
+//    [http requestPost:urlPath withImage:image andParam:parameters completedBlock:^(id responseObject) {
+////        vc.wifiView.hidden = YES;
+////        vc.servErrorView.hidden = YES;
+//        
+//        NSString * message = [ObjectHasUtil parseMsg:responseObject];
+//        if ([ObjectHasUtil parseSuccess:responseObject]) {
+//            NSDictionary *dic=[ObjectHasUtil parseResponse:responseObject];
+//            if (dic!=nil&&[dic isKindOfClass:[NSDictionary class]]) {
+//                if(delegate!=nil&&[delegate respondsToSelector:@selector(success:tag:withFlag:)]){
+//                    [delegate success:dic tag:tag withFlag:flag];
+//                }
+//            }else{
+//                if(delegate!=nil&&[delegate respondsToSelector:@selector(empty:)]){
+//                    [delegate empty:tag];
+//                }
+//            }
+//            
+//            if (!IsStrEmpty(message)) {
+//                [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@",message]];
+//            }
+//        } else {
+//            if(delegate!=nil&&[delegate respondsToSelector:@selector(fail:tag:)]){
+//                [delegate fail:message tag:tag];
+//                
+//                NSString * code = [ObjectHasUtil parseCode:responseObject];
+//                if (code.intValue == 401)
+//                {
+//                    NSUserDefaults * saveDef = [NSUserDefaults standardUserDefaults];
+//                    [saveDef setBool:NO forKey:TAG_ISUSERLOGINED];
+//                    [saveDef setValue:@"" forKey:@"userCookie"];//清除
+//                    [saveDef synchronize];
+//                    //清除所有缓存
+//                    [[NSURLCache sharedURLCache] removeAllCachedResponses];
+//                    APPDELEGATE.mainTabVC.redCount.hidden = YES;
+//                    
+//                    [LoginManager ensureLoginFromVC:vc withIndex:1 successBlock:^{
+//                        
+//                    } failBlock:^{
+//                        
+//                    } cancelBlock:^{
+//                        
+//                    }];
+//                } else if (code.intValue == 20001) {
+//                    NoExistVC * existVC = [[NoExistVC alloc] init];
+//                    [vc.navigationController pushViewController:existVC animated:YES];
+//                } else if (code.intValue == 200002) {
+//                    NoDataVC * dataVC = [[NoDataVC alloc] init];
+//                    [vc.navigationController pushViewController:dataVC animated:YES];
+//                } else {
+//                    if (!IsStrEmpty(message)) {
+//                        [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@",message]];
+//                    } else {
+//                        if(delegate!=nil&&[delegate respondsToSelector:@selector(empty:)]){
+//                            [delegate empty:tag];
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    } failureBlock:^(NSError *error) {
+//        if(delegate!=nil&&[delegate respondsToSelector:@selector(error:)]){
+//            [delegate error:tag];
+//        }
+//    }];
+//    
+//}
+//
+//
+//+ (void)requestPost:(NSString *)urlPath withImages:(NSArray <UIImage *>*)images withParameters:(NSDictionary *)parameters withProtocol:(id<HttpProtocol>)delegate withTag:(NSString*)tag withFlag:(NSString*)flag{
+//    
+//    BasePresenter * base = (BasePresenter*)delegate;
+//    BaseVC * vc = (BaseVC*)base.currentVC;
+//    HttpU * http = [[HttpU alloc] init];
+//    [http requestPost:urlPath withImages:images andParam:parameters completedBlock:^(id responseObject) {
+//        //        vc.wifiView.hidden = YES;
+//        //        vc.servErrorView.hidden = YES;
+//        
+//        NSString * message = [ObjectHasUtil parseMsg:responseObject];
+//        if ([ObjectHasUtil parseSuccess:responseObject]) {
+//            NSDictionary *dic=[ObjectHasUtil parseResponse:responseObject];
+//            if (dic!=nil&&[dic isKindOfClass:[NSDictionary class]]) {
+//                if(delegate!=nil&&[delegate respondsToSelector:@selector(success:tag:withFlag:)]){
+//                    [delegate success:dic tag:tag withFlag:flag];
+//                }
+//            }else{
+//                if(delegate!=nil&&[delegate respondsToSelector:@selector(empty:)]){
+//                    [delegate empty:tag];
+//                }
+//            }
+//            
+//            if (!IsStrEmpty(message)) {
+//                [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@",message]];
+//            }
+//        } else {
+//            if(delegate!=nil&&[delegate respondsToSelector:@selector(fail:tag:)]){
+//                [delegate fail:message tag:tag];
+//                
+//                NSString * code = [ObjectHasUtil parseCode:responseObject];
+//                if (code.intValue == 401)
+//                {
+//                    NSUserDefaults * saveDef = [NSUserDefaults standardUserDefaults];
+//                    [saveDef setBool:NO forKey:TAG_ISUSERLOGINED];
+//                    [saveDef setValue:@"" forKey:@"userCookie"];//清除
+//                    [saveDef synchronize];
+//                    //清除所有缓存
+//                    [[NSURLCache sharedURLCache] removeAllCachedResponses];
+//                    APPDELEGATE.mainTabVC.redCount.hidden = YES;
+//                    
+//                    [LoginManager ensureLoginFromVC:vc withIndex:1 successBlock:^{
+//                        
+//                    } failBlock:^{
+//                        
+//                    } cancelBlock:^{
+//                        
+//                    }];
+//                } else if (code.intValue == 20001) {
+//                    NoExistVC * existVC = [[NoExistVC alloc] init];
+//                    [vc.navigationController pushViewController:existVC animated:YES];
+//                } else if (code.intValue == 200002) {
+//                    NoDataVC * dataVC = [[NoDataVC alloc] init];
+//                    [vc.navigationController pushViewController:dataVC animated:YES];
+//                } else {
+//                    if (!IsStrEmpty(message)) {
+//                        [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@",message]];
+//                    } else {
+//                        if(delegate!=nil&&[delegate respondsToSelector:@selector(empty:)]){
+//                            [delegate empty:tag];
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    } failureBlock:^(NSError *error) {
+//        if(delegate!=nil&&[delegate respondsToSelector:@selector(error:)]){
+//            [delegate error:tag];
+//        }
+//    }];
+//    
+//}
+
++ (void)requestPost:(NSString *)urlPath withParameters:(NSDictionary *)parameters vc:(BaseVC *)vc success:(void (^)(NSDictionary *))success fail:(void (^)(void))failBlc empty:(void (^)(void))emptyBlc error:(void (^)(void))errorBlc {
+    HttpU *http = [[HttpU alloc] init];
+    [http requestPost:urlPath withParameters:parameters completedBlock:^(id responseObject) {
+        NSString * message = [ObjectHasUtil parseMsg:responseObject];
+        if ([ObjectHasUtil parseSuccess:responseObject]) {
+            NSDictionary *dic = [ObjectHasUtil parseResponse:responseObject];
+            if (dic != nil && ([dic isKindOfClass:[NSDictionary class]] || [dic isKindOfClass:[NSArray class]])) {
+                success(dic);
+            }else {
+                emptyBlc();
+            }
+            if (!IsStrEmpty(message)) {
+                [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@", message]];
+            }
+        }else {
+            failBlc();
+            
+            NSString *code = [ObjectHasUtil parseCode:responseObject];
+            if (code.intValue == 401) {
+                NSUserDefaults *saveDef = [NSUserDefaults standardUserDefaults];
+                [saveDef setBool:NO forKey:TAG_ISUSERLOGINED];
+                [saveDef setValue:@"0" forKey:TAG_IFBILLVIP];
+                [saveDef setValue:@"" forKey:@"userCookie"];//清除
+                [saveDef synchronize];
+                //清除所有缓存
+                [[NSURLCache sharedURLCache] removeAllCachedResponses];
+                [LoginManager ensureLoginFromVC:vc withIndex:1 successBlock:^{
+                    
+                } failBlock:^{
+                    
+                } cancelBlock:^{
+                    
+                }];
+            }else {
+                if (!IsStrEmpty(message)) {
+                    [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@", message]];
+                }else {
+                    emptyBlc();
+                }
+            }
+        }
+    } failureBlock:^(NSError *error) {
+        errorBlc();
+        NSString *version = [AppTools getAppVersion];
+        NSString *inviteCode = USERDEFAULT_get(TAG_INVITECODE);
+        NSString *sysVersion = [[UIDevice currentDevice] systemVersion]; //获取系统版本 例如：9.2
+        NSString * errorInfo = [NSString stringWithFormat:@"errorName=%@;errorCode=%@;errorDes=%@;inviteCode=%@;version=%@;systemVersion=%@;errorUrl=%@",
+                                @"网络开小差啦",
+                                [NSString stringWithFormat:@"%ld",(long)error.code],
+                                STRING_judge(error.localizedDescription),
+                                STRING_judge(inviteCode),
+                                STRING_judge(version),
+                                STRING_judge(sysVersion),
+                                STRING_judge(urlPath)];
+        
+        [MobClick event:@"neterror_toast" label:errorInfo];
+    }];
+}
+
++ (void)requestPost:(NSString *)urlPath withImage:(UIImage *)image withParameters:(NSDictionary *)parameters vc:(BaseVC *)vc success:(void (^)(NSDictionary *))success fail:(void (^)(void))failBlc empty:(void (^)(void))emptyBlc error:(void (^)(void))errorBlc {
+    HttpU *http = [[HttpU alloc] init];
+    [http requestPost:urlPath withImage:image andParam:parameters completedBlock:^(id responseObject) {
+        
+        NSString *message = [ObjectHasUtil parseMsg:responseObject];
+        if ([ObjectHasUtil parseSuccess:responseObject]) {
+            NSDictionary *dic = [ObjectHasUtil parseResponse:responseObject];
+            if (dic != nil &&[ dic isKindOfClass:[NSDictionary class]]) {
+                success(dic);
+            }else {
+                emptyBlc();
+            }
+            
+            if (!IsStrEmpty(message)) {
+                [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@", message]];
+            }
+        }else {
+            failBlc();
+            NSString *code = [ObjectHasUtil parseCode:responseObject];
+            if (code.intValue == 401) {
+                NSUserDefaults *saveDef = [NSUserDefaults standardUserDefaults];
+                [saveDef setBool:NO forKey:TAG_ISUSERLOGINED];
+                [saveDef setValue:@"0" forKey:TAG_IFBILLVIP];
+                [saveDef setValue:@"" forKey:@"userCookie"];//清除
+                [saveDef synchronize];
+                //清除所有缓存
+                [[NSURLCache sharedURLCache] removeAllCachedResponses];                
+                [LoginManager ensureLoginFromVC:vc withIndex:1 successBlock:^{
+                    
+                } failBlock:^{
+                    
+                } cancelBlock:^{
+                    
+                }];
+            }else if (code.intValue == 20001) {
+                NoExistVC * existVC = [[NoExistVC alloc] init];
+                [vc.navigationController pushViewController:existVC animated:YES];
+            }else if (code.intValue == 200002) {
+                NoDataVC * dataVC = [[NoDataVC alloc] init];
+                [vc.navigationController pushViewController:dataVC animated:YES];
+            }else {
+                if (!IsStrEmpty(message)) {
+                    [AppTools showToastUseMBHub:APPDELEGATE.window showText:[NSString stringWithFormat:@"%@",message]];
+                }else {
+                    emptyBlc();
+                }
+            }
+        }
+    } failureBlock:^(NSError *error) {
+        errorBlc();
+        NSString *version = [AppTools getAppVersion];
+        NSString *inviteCode = USERDEFAULT_get(TAG_INVITECODE);
+        NSString *sysVersion = [[UIDevice currentDevice] systemVersion]; //获取系统版本 例如：9.2
+        NSString * errorInfo = [NSString stringWithFormat:@"errorName=%@;errorCode=%@;errorDes=%@;inviteCode=%@;version=%@;systemVersion=%@;errorUrl=%@",
+                                @"网络开小差啦",
+                                [NSString stringWithFormat:@"%ld",(long)error.code],
+                                STRING_judge(error.localizedDescription),
+                                STRING_judge(inviteCode),
+                                STRING_judge(version),
+                                STRING_judge(sysVersion),
+                                STRING_judge(urlPath)];
+        
+        [MobClick event:@"neterror_toast" label:errorInfo];
+    }];
+    
+}
+
+
+@end

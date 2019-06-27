@@ -1,0 +1,366 @@
+//
+//  HttpU.m
+//  IosLangTest
+//
+//  Created by jessie on 2018/3/19.
+//  Copyright © 2018年 langzu. All rights reserved.
+//
+
+#import "HttpU.h"
+#import <arpa/inet.h>
+
+
+@implementation HttpU
+
+- (instancetype)init
+{
+    if (self = [super init])
+    {
+        self.retryCount = 3;
+        self.isCache = NO;
+    }
+    return self;
+}
+
+
+-(void)requestPost:(NSString *)urlPath withParameters:(NSDictionary *)param completedBlock:(void(^)(id responseObject))completedBlock failureBlock:(void(^)(NSError *error))failureBlock{
+    
+    AFHTTPManager *manager = [AFHTTPManager sharedClient];
+    manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/javascript",@"text/html",@"text/plain", nil];//设置相应内容类型
+    manager.requestSerializer.timeoutInterval = 15.f;//设置超时时长
+    manager.requestSerializer.HTTPShouldHandleCookies = YES;
+    
+    NSString * valueString = [[NSUserDefaults standardUserDefaults] objectForKey:@"userCookie"];
+    if (!IsStrEmpty(valueString)) {
+        
+    }
+    [manager.requestSerializer setValue:STRING_judge(valueString) forHTTPHeaderField:@"Cookie"];
+    
+    
+    NSString *version = [AppTools getAppVersion];
+    NSString *WXVersion= USERDEFAULT_get(@"oldWXVersion");
+    NSString *identifierForVendor = [AppTools getDeviceIDFV];
+    NSString *deviceName = [AppTools deviceModelName];//获取设备的型号
+    NSString *sysVersion = [[UIDevice currentDevice] systemVersion]; //获取系统版本 例如：9.2
+    
+    NSMutableDictionary * mutPara = [[NSMutableDictionary alloc] init];
+    [mutPara addEntriesFromDictionary:param];
+    [mutPara setObject:version forKey:@"versionIos"];
+    [mutPara setObject:version forKey:@"version"];
+    [mutPara setObject:STRING_judge(WXVersion) forKey:@"weexVersion"];
+    [mutPara setObject:STRING_judge(identifierForVendor) forKey:@"imei"];
+    [mutPara setObject:STRING_judge(deviceName) forKey:@"mobileModel"];//手机型号
+    [mutPara setObject:STRING_judge(sysVersion) forKey:@"systemVersion"];//操作系统版本
+    [mutPara setObject:@"2" forKey:@"clientType"];
+    [mutPara setObject:@"2" forKey:@"appType"];
+
+    
+    if ([urlPath containsString:GETAppIndex] || [urlPath containsString:GETCurrentActivity] || [urlPath containsString:GETActivityGoods] || [urlPath containsString:GETThemeDetail] || [urlPath containsString:GETSearchGoods] || [urlPath containsString:MyOrderCount] || [urlPath containsString:GETUserInfo] || [urlPath containsString:GETShopCarList] || [urlPath containsString:GETDisabledShopCar] || [urlPath containsString:GETCarParCode]) {
+        
+        if (APPDELEGATE.isHaveNetWork && !self.isCache) {
+            manager.requestSerializer.cachePolicy = NSURLRequestReloadIgnoringCacheData;
+        } else {
+            manager.requestSerializer.cachePolicy = NSURLRequestReturnCacheDataElseLoad;
+        }
+        [manager GET:urlPath parameters:mutPara progress:^(NSProgress * _Nonnull downloadProgress) {
+            
+        } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+            NSString *responseStr;
+            if ([responseObject isKindOfClass:[NSData class]]) {
+                responseStr = [[NSString alloc] initWithData:(NSData *)responseObject encoding:NSUTF8StringEncoding];
+            }else{
+                responseStr = [responseObject jsonEncodedKeyValueString];
+            }
+            NSLog(@"urlPath%@请求返回数据===%@",urlPath,responseStr);
+            
+            NSHTTPURLResponse  *response =  (NSHTTPURLResponse *)task.response;
+            NSString  *cookie = [response allHeaderFields][@"Set-Cookie"];
+            if ([cookie rangeOfString:@"JSSIONID="].location!=NSNotFound) {
+                NSArray * arr = [cookie componentsSeparatedByString:@"JSSIONID="];
+                if (arr.count>=2) {
+                    cookie = arr[1];
+                    cookie = [cookie componentsSeparatedByString:@";"][0];
+                    
+                    NSUserDefaults *saveDef = [NSUserDefaults standardUserDefaults];
+                    [saveDef setValue:[NSString stringWithFormat:@"JSSIONID=%@",STRING_judge(cookie)] forKey:@"userCookie"];
+                    [saveDef synchronize];
+                }
+            }
+            
+            completedBlock(responseStr);
+        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+            //请求失败重试3次机会
+            if (self.retryCount > 0) {
+                self.retryCount --;
+                if (self.retryCount < 0) {
+                    self.retryCount = 0;
+                }
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    // 1秒后异步执行这里的代码...
+                    if (self.retryCount == 0) {
+                        self.isCache = YES;
+                    }
+                    [self requestPost:urlPath withParameters:param completedBlock:completedBlock failureBlock:failureBlock];
+                });
+            } else {
+                failureBlock(error);
+            }
+        }];
+    } else {
+        
+        manager.requestSerializer.cachePolicy = NSURLRequestReloadIgnoringCacheData;
+        [manager POST:urlPath parameters:mutPara progress:^(NSProgress * _Nonnull uploadProgress) {
+            
+        } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+            NSString *responseStr;
+            if ([responseObject isKindOfClass:[NSData class]]) {
+                responseStr = [[NSString alloc] initWithData:(NSData *)responseObject encoding:NSUTF8StringEncoding];
+            }else{
+                responseStr = [responseObject jsonEncodedKeyValueString];
+            }
+            NSLog(@"urlPath%@请求返回数据===%@",urlPath,responseStr);
+            
+            
+            NSHTTPURLResponse  *response =  (NSHTTPURLResponse *)task.response;
+            NSString  *cookie = [response allHeaderFields][@"Set-Cookie"];
+            if ([cookie rangeOfString:@"JSSIONID="].location!=NSNotFound) {
+                NSArray * arr = [cookie componentsSeparatedByString:@"JSSIONID="];
+                if (arr.count>=2) {
+                    cookie = arr[1];
+                    cookie = [cookie componentsSeparatedByString:@";"][0];
+                    
+                    NSUserDefaults *saveDef = [NSUserDefaults standardUserDefaults];
+                    [saveDef setValue:[NSString stringWithFormat:@"JSSIONID=%@",STRING_judge(cookie)] forKey:@"userCookie"];
+                    [saveDef synchronize];
+                }
+            }
+            
+            completedBlock(responseStr);
+        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+            //请求失败重试3次机会
+            if (self.retryCount > 1) {
+                self.retryCount --;
+                if (self.retryCount < 0) {
+                    self.retryCount = 0;
+                }
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    // 1秒后异步执行这里的代码...
+                    [self requestPost:urlPath withParameters:param completedBlock:completedBlock failureBlock:failureBlock];
+                });
+            } else {
+                failureBlock(error);
+            }
+        }];
+    }
+    
+    
+    
+    
+    
+}
+
+
+//单张图片上传
+-(void)requestPost:(NSString *)urlPath withImage:(UIImage *)image andParam:(NSDictionary *)param completedBlock:(void(^)(id responseObject))completedBlock failureBlock:(void(^)(NSError *error))failureBlock
+{
+    
+    AFHTTPManager *manager = [AFHTTPManager sharedClient];
+    //接收类型不一致请替换一致text/html或别的
+    manager.responseSerializer.acceptableContentTypes =[NSSet setWithObjects:@"application/json",@"text/html",
+                                                        @"image/jpeg",
+                                                        @"image/png",
+                                                        @"application/octet-stream",
+                                                        @"text/json",
+                                                        @"text/plain",
+                                                        nil];
+    manager.requestSerializer.timeoutInterval = 15.f;//设置超时时长
+    manager.requestSerializer.HTTPShouldHandleCookies = YES;
+    
+    NSString  *valueString = [[NSUserDefaults standardUserDefaults] objectForKey:@"userCookie"];
+    [manager.requestSerializer setValue:valueString forHTTPHeaderField:@"Cookie"];
+    manager.requestSerializer.cachePolicy = NSURLRequestReloadIgnoringCacheData;
+    
+    
+    NSString *version = [AppTools getAppVersion];
+    NSString *WXVersion= USERDEFAULT_get(@"oldWXVersion");
+    NSString *identifierForVendor = [AppTools getDeviceIDFV];
+    NSString *deviceName = [AppTools deviceModelName];//获取设备的型号
+    NSString *sysVersion = [[UIDevice currentDevice] systemVersion]; //获取系统版本 例如：9.2
+    NSMutableDictionary * mutPara = [[NSMutableDictionary alloc] init];
+    [mutPara addEntriesFromDictionary:param];
+    [mutPara setObject:version forKey:@"versionIos"];
+    [mutPara setObject:version forKey:@"version"];
+    [mutPara setObject:STRING_judge(WXVersion) forKey:@"weexVersion"];
+    [mutPara setObject:STRING_judge(identifierForVendor) forKey:@"imei"];
+    [mutPara setObject:STRING_judge(deviceName) forKey:@"mobileModel"];//手机型号
+    [mutPara setObject:STRING_judge(sysVersion) forKey:@"systemVersion"];//操作系统版本
+    [mutPara setObject:@"2" forKey:@"clientType"];
+    [mutPara setObject:@"2" forKey:@"appType"];
+    
+    [manager POST:urlPath parameters:mutPara constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+        NSData *imageData = UIImageJPEGRepresentation(image,1);
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        formatter.dateFormat =@"yyyyMMddHHmmss";
+        NSString *str = [formatter stringFromDate:[NSDate date]];
+        NSString *fileName = [NSString stringWithFormat:@"%@.jpg", str];
+        
+        //上传的参数(上传图片，以文件流的格式)
+        [formData appendPartWithFileData:imageData
+                                    name:@"pic"
+                                fileName:fileName
+                                mimeType:@"image/jpeg"];
+    } progress:^(NSProgress * _Nonnull uploadProgress) {
+        
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        
+        NSHTTPURLResponse  *response =  (NSHTTPURLResponse *)task.response;
+        NSString  *cookie = [response allHeaderFields][@"Set-Cookie"];
+        if ([cookie rangeOfString:@"JSSIONID="].location!=NSNotFound) {
+            NSArray * arr = [cookie componentsSeparatedByString:@"JSSIONID="];
+            if (arr.count>=2) {
+                cookie = arr[1];
+                cookie = [cookie componentsSeparatedByString:@";"][0];
+                
+                NSUserDefaults *saveDef = [NSUserDefaults standardUserDefaults];
+                [saveDef setValue:[NSString stringWithFormat:@"JSSIONID=%@",STRING_judge(cookie)] forKey:@"userCookie"];
+                [saveDef synchronize];
+            }
+        }
+        
+        completedBlock(responseObject);
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        failureBlock(error);
+    }];
+    
+    
+}
+
+
+//多张图片上传
+- (void)requestPost:(NSString *)urlPath withImages:(NSArray<UIImage *> *)images andParam:(NSDictionary *)param completedBlock:(void(^)(id responseObject))completedBlock failureBlock:(void(^)(NSError *error))failureBlock {
+    
+    AFHTTPManager *manager = [AFHTTPManager sharedClient];
+    //接收类型不一致请替换一致text/html或别的
+    manager.responseSerializer.acceptableContentTypes =[NSSet setWithObjects:@"application/json",@"text/html",
+                                                        @"image/jpeg",
+                                                        @"image/png",
+                                                        @"application/octet-stream",
+                                                        @"text/json",
+                                                        @"text/plain",
+                                                        nil];
+    manager.requestSerializer.timeoutInterval = 15.f;//设置超时时长
+    manager.requestSerializer.HTTPShouldHandleCookies = YES;
+    
+    NSString  *valueString = [[NSUserDefaults standardUserDefaults] objectForKey:@"userCookie"];
+    [manager.requestSerializer setValue:valueString forHTTPHeaderField:@"Cookie"];
+    manager.requestSerializer.cachePolicy = NSURLRequestReloadIgnoringCacheData;
+    
+    
+    NSString *version = [AppTools getAppVersion];
+    NSString *WXVersion= USERDEFAULT_get(@"oldWXVersion");
+    NSString *identifierForVendor = [AppTools getDeviceIDFV];
+    NSString *deviceName = [AppTools deviceModelName];//获取设备的型号
+    NSString *sysVersion = [[UIDevice currentDevice] systemVersion]; //获取系统版本 例如：9.2
+    NSMutableDictionary * mutPara = [[NSMutableDictionary alloc] init];
+    [mutPara addEntriesFromDictionary:param];
+    [mutPara setObject:version forKey:@"versionIos"];
+    [mutPara setObject:version forKey:@"version"];
+    [mutPara setObject:STRING_judge(WXVersion) forKey:@"weexVersion"];
+    [mutPara setObject:STRING_judge(identifierForVendor) forKey:@"imei"];
+    [mutPara setObject:STRING_judge(deviceName) forKey:@"mobileModel"];//手机型号
+    [mutPara setObject:STRING_judge(sysVersion) forKey:@"systemVersion"];//操作系统版本
+    [mutPara setObject:@"2" forKey:@"clientType"];
+    [mutPara setObject:@"2" forKey:@"appType"];
+    
+    [manager POST:urlPath parameters:mutPara constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+        
+        for (int i = 0; i < images.count; i++) {
+            UIImage *image = images[i];
+            NSData *imageData = UIImageJPEGRepresentation(image, 1);
+            NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+            [formatter setDateFormat:@"yyyyMMddHHmmss"];
+            NSString *dateString = [formatter stringFromDate:[NSDate date]];
+            NSString *fileName = [NSString  stringWithFormat:@"%@.jpg", dateString];
+            [formData appendPartWithFileData:imageData name:@"imgList" fileName:fileName mimeType:@"image/jpeg"];
+        }
+        
+    } progress:^(NSProgress * _Nonnull uploadProgress) {
+        
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        
+        NSHTTPURLResponse  *response =  (NSHTTPURLResponse *)task.response;
+        NSString  *cookie = [response allHeaderFields][@"Set-Cookie"];
+        if ([cookie rangeOfString:@"JSSIONID="].location!=NSNotFound) {
+            NSArray * arr = [cookie componentsSeparatedByString:@"JSSIONID="];
+            if (arr.count>=2) {
+                cookie = arr[1];
+                cookie = [cookie componentsSeparatedByString:@";"][0];
+                
+                NSUserDefaults *saveDef = [NSUserDefaults standardUserDefaults];
+                [saveDef setValue:[NSString stringWithFormat:@"JSSIONID=%@",STRING_judge(cookie)] forKey:@"userCookie"];
+                [saveDef synchronize];
+            }
+        }
+        
+        completedBlock(responseObject);
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        failureBlock(error);
+    }];
+    
+    
+}
+
+
+//应用启动或者网络连通性变化时, 对域名进行解析:
+- (BOOL)resolveHost:(NSString *)hostname {
+    Boolean result;
+    CFHostRef hostRef;
+    CFArrayRef addresses;
+    NSString *ipAddress = nil;
+    hostRef = CFHostCreateWithName(kCFAllocatorDefault, (__bridge CFStringRef)hostname);
+    if (hostRef) {
+        result = CFHostStartInfoResolution(hostRef, kCFHostAddresses, NULL);// pass an error instead of NULL here to find out why it failed
+        if (result) {
+            addresses = CFHostGetAddressing(hostRef, &result);
+        }
+    }
+    if (result) {
+        CFIndex index = 0; CFDataRef ref = (CFDataRef) CFArrayGetValueAtIndex(addresses, index);
+        int port=0;
+        struct sockaddr *addressGeneric;
+        NSData *myData = (__bridge NSData *)ref;
+        addressGeneric = (struct sockaddr *)[myData bytes];
+        switch (addressGeneric->sa_family) {
+            case AF_INET: {
+                struct sockaddr_in *ip4;
+                char dest[INET_ADDRSTRLEN];
+                ip4 = (struct sockaddr_in *)[myData bytes];
+                port = ntohs(ip4->sin_port);
+                ipAddress = [NSString stringWithFormat:@"%s", inet_ntop(AF_INET, &ip4->sin_addr, dest, sizeof dest)];
+                
+            }
+                break;
+            case AF_INET6: {
+                struct sockaddr_in6 *ip6;
+                char dest[INET6_ADDRSTRLEN];
+                ip6 = (struct sockaddr_in6 *)[myData bytes]; port = ntohs(ip6->sin6_port);
+                ipAddress = [NSString stringWithFormat:@"%s", inet_ntop(AF_INET6, &ip6->sin6_addr, dest, sizeof dest)];
+                
+            }
+                break;
+            default: ipAddress = nil;
+                break;
+        }
+    }
+    if (ipAddress) {
+        return YES;
+    } else {
+        return NO;
+    }
+    
+}
+
+
+
+
+@end
